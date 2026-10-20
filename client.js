@@ -46,6 +46,11 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			if (path.indexOf("/dsh-purge/update") !== -1) return method === "POST" ? 180000 : 45000;
 			if (path.indexOf("/dsh-purge/uninstall") !== -1) return 90000;
 			if (path.indexOf("/dsh-purge/skill") !== -1) return method === "POST" ? 120000 : 20000;
+			// status 会在"应用"期间被后端的同步落盘阻塞，默认 20s 必然被 abort，界面只会显示"读取失败: timeout"。
+			if (path.indexOf("/dsh-purge/status") !== -1) return 60000;
+			if (path.indexOf("/dsh-purge/apply") !== -1) return 240000;
+			if (path.indexOf("/dsh-purge/revert") !== -1) return 120000;
+			if (path.indexOf("/dsh-purge/restart") !== -1) return 60000;
 			return 20000;
 		}
 		function isAbortError(e) {
@@ -192,7 +197,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"status.pending": "待应用",
 			"status.unmatched": "没对上",
 			"status.skipped": "跳过",
-			"apply.hint": "点应用会把提示词框里的全文写入并打补丁，不必再点保存。待应用=原文还在。跳过=当前版本不需要或组件未安装。",
+			"apply.hint": "点应用会打补丁并把当前默认提示词挂上，框里仍是插件旧默认时自动刷到加密槽，不必再点保存。只有你另写的稿才会按框落盘。待应用=原文还在。跳过=当前版本不需要或组件未安装。",
 			"warn.noRoot": "未定位到当前宿主的 @deepseek-ai，清洗不会生效。请完全退出后再打开本宿主，在本页点「应用」。桌面端安装目录可以是任意盘符；目录名带 DeepseekHarness / DeepSeek Harness 均可。",
 			"warn.noRoot.desktop": "官方客户端的代码在 app.asar 里。点「应用」会解开并自动重启，不用另跑脚本。若一直显示还没定位，先完全退出客户端再开，再点「应用」。第三方 DSH Desktop 直接点「应用」。",
 			"unpack.restarting": "补丁已写入。点「重启」后客户端会自己重新打开。",
@@ -271,6 +276,19 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"rules.reset.confirm": "还原全局指令文件？规则库会保留。",
 			"rules.empty": "暂无规则",
 			"rules.pick": "选择规则",
+			"policy.title": "工作区策略",
+			"policy.strict": "严格",
+			"policy.fallback": "空位兜底",
+			"policy.always": "总是允许",
+			"policy.hint": "严格：永远剥 AGENTS.md / CLAUDE.md；空位兜底：提示词框为空时才用；总是允许：保留 DSH 原生行为",
+			"cwd.title": "本地规则（当前目录）",
+			"cwd.empty": "当前目录没有 AGENTS.md / CLAUDE.md",
+			"cwd.rescan": "重新扫描",
+			"cwd.hint": "只有提示词框为空时，被勾选的本地文件才作为兜底注入；提示词框一旦非空就不会用这些文件。",
+			"cwd.scope.cwd": "当前目录",
+			"cwd.scope.ancestor": "上级",
+			"cwd.scope.root": "项目根",
+			"cwd.no.workspace": "DSH 尚未选过工作目录，请先在 DSH 里开始一次任务再回来。",
 			"pill.current": "当前",
 			"btn.use": "启用",
 			"btn.inUse": "当前",
@@ -352,13 +370,13 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"patch.17": "观察策略读写放行",
 			"patch.18": "重复调用守卫禁用",
 			"patch.19": "工具结果修剪禁用",
-			"patch.21": "bash 超时 60s → 10min",
+			"patch.21": "恢复插件延长的 bash 等待",
 			"patch.22": "read 上限放宽",
 			"patch.23": "子代理深度 3 → 10",
 			"patch.24": "preset fetch 启用",
 			"patch.25": "去掉官方默认身份（功能提示词不动）",
 			"patch.26": "minimal：去掉默认身份并打开 inject",
-			"patch.28": "dsh-liangshen（梁神）：phase-1 保留注入段",
+			"patch.28": "dsh-liangshen（梁神）：phase-1 保留 dsh-purge / dshpg 段",
 			"patch.70": "极简模式终端不再禁止网络",
 			"patch.71": "梁神去掉官方身份句",
 			"patch.29": "dsh-tool-web：外部 untrusted 拦截→可执行",
@@ -408,7 +426,6 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"patch.77": "回退标记到达时丢弃已发送消息",
 			"patch.78": "补丁文件缺失时从 .bak 恢复",
 			"patch.80": "恢复官方极简工具表",
-			"patch.81": "每一步重放完整 prompt-inject",
 			"patch.82": "主进程兜底 DSH_PROFILE=desktop",
 			"patch.83": "host 信号杀时不报错不弹对话框",
 			"patch.84": "host code=0 正常退出不报错 (消除 stopped 对话框)",
@@ -520,7 +537,7 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"status.pending": "Pending",
 			"status.unmatched": "No match",
 			"status.skipped": "Skipped",
-			"apply.hint": "Apply writes the prompt in the box and the patches. A separate save is unnecessary. Pending = original text still present. Skipped = not needed for this version or the component is not installed.",
+			"apply.hint": "Apply writes patches and hangs the current default prompt. A stale plugin default in the box is refreshed from the sealed slot; a separate save is unnecessary. Only a prompt you wrote yourself is kept from the box. Pending = original text still present. Skipped = not needed for this version or the component is not installed.",
 			"warn.noRoot": "Could not find this host’s @deepseek-ai tree, so Apply will not patch anything. Fully quit and reopen this host, then Apply here. Desktop may live on any drive; folder names like DeepseekHarnessDesktop or DeepSeek Harness are fine.",
 			"warn.noRoot.desktop": "Official Harness keeps its code in app.asar. Apply unpacks it and restarts the app. If this page stays “not found”, fully quit the client, reopen it, then Apply again. Third-party DSH Desktop: just Apply.",
 			"unpack.restarting": "Patches are written. Click Restart and the client opens again by itself.",
@@ -599,6 +616,19 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"rules.reset.confirm": "Restore global instruction files? The rule library is kept.",
 			"rules.empty": "No rules",
 			"rules.pick": "Select a rule",
+			"policy.title": "Workspace policy",
+			"policy.strict": "Strict",
+			"policy.fallback": "Fallback",
+			"policy.always": "Always on",
+			"policy.hint": "Strict: always strip AGENTS.md / CLAUDE.md. Fallback: use workspace files only when the prompt box is empty. Always on: keep DSH default behavior.",
+			"cwd.title": "Local rules (current folder)",
+			"cwd.empty": "No AGENTS.md / CLAUDE.md in this folder",
+			"cwd.rescan": "Rescan",
+			"cwd.hint": "Checked files are injected only when the prompt box is empty. A non-empty prompt box always wins.",
+			"cwd.scope.cwd": "cwd",
+			"cwd.scope.ancestor": "ancestor",
+			"cwd.scope.root": "project root",
+			"cwd.no.workspace": "DSH has not opened a workspace yet. Start a task in DSH first, then come back.",
 			"pill.current": "On",
 			"btn.use": "Enable",
 			"btn.inUse": "On",
@@ -680,13 +710,13 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"patch.17": "Observation policy allow R/W",
 			"patch.18": "Repeat-call guard off",
 			"patch.19": "Tool-result pruner off",
-			"patch.21": "bash timeout 60s → 10min",
+			"patch.21": "Restore plugin-raised bash wait",
 			"patch.22": "read cap raised",
 			"patch.23": "subagent depth 3 → 10",
 			"patch.24": "preset fetch on",
 			"patch.25": "Strip official default identity (keep feature prompts)",
 			"patch.26": "minimal: strip identity, open inject",
-			"patch.28": "dsh-liangshen: keep inject in phase-1",
+			"patch.28": "dsh-liangshen: keep dsh-purge / dshpg in phase-1",
 			"patch.70": "Minimal shell drops the no-network line",
 			"patch.71": "Liangshen drops the stock identity line",
 			"patch.29": "dsh-tool-web: untrusted framing → usable data",
@@ -736,7 +766,6 @@ window.__ModuleLoader__.load({ id: "dsh-purge", factory: (require) => {
 			"patch.77": "Rewind marker drops already-sent messages",
 			"patch.78": "Restore missing overlay from .bak backup",
 			"patch.80": "Restore official minimal tool plugins",
-			"patch.81": "Replay the full prompt-inject every step",
 			"patch.82": "Fallback DSH_PROFILE=desktop in main process",
 			"patch.83": "Don't fail on signal kill (no crash dialog)",
 			"patch.84": "Don't fail on code=0 clean exit (no stopped dialog)",
@@ -891,12 +920,34 @@ body[data-ds-dark-theme] .dshp-restart-card .dshp-btn-primary,body[data-ds-dark-
 .dshp-editor{display:flex;flex-direction:column;gap:10px;min-width:0;border:1px solid var(--dshp-line);border-radius:8px;background:var(--dshp-bg);padding:12px;min-height:320px}
 .dshp-editor .dshp-area{flex:1;min-height:240px}
 .dshp-editor-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--dshp-mute);font-size:13px;min-height:160px}
+.dshp-block{padding:14px 0;border-top:1px solid var(--dshp-line)}
+.dshp-block-head{display:flex;align-items:center;gap:10px;margin:0 0 8px}
+.dshp-block-head h4{margin:0;font-family:var(--dshp-display);font-size:14px;font-weight:500;flex:1;color:var(--dshp-ink)}
+.dshp-block-hint{margin:8px 0 0;font-size:12px;line-height:1.55;color:var(--dshp-mute)}
+.dshp-policy-row{display:flex;align-items:center;gap:10px}
+.dshp-policy-row>label{font-size:12px;color:var(--dshp-mute);flex:0 0 auto}
+.dshp-cwd-path{margin:0 0 8px;font-family:var(--dshp-mono);font-size:11px;color:var(--dshp-mute);word-break:break-all;line-height:1.5}
+.dshp-cwd-list{display:flex;flex-direction:column;border:1px solid var(--dshp-line);border-radius:8px;background:var(--dshp-bg);overflow:hidden}
+.dshp-cwd-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-bottom:1px solid var(--dshp-line);cursor:pointer;margin:0}
+.dshp-cwd-item:last-child{border-bottom:0}
+.dshp-cwd-item:hover{background:var(--dshp-fill)}
+.dshp-cwd-item.is-on{background:var(--dshp-accent-soft)}
+.dshp-cwd-item input{margin:3px 0 0;flex:0 0 auto}
+.dshp-cwd-main{flex:1;min-width:0}
+.dshp-cwd-name{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--dshp-display);font-size:13.5px;line-height:1.35;color:var(--dshp-ink)}
+.dshp-cwd-badge{font-family:var(--dshp-mono);font-size:10px;letter-spacing:.04em;text-transform:uppercase;padding:1px 7px;border-radius:99px;border:1px solid var(--dshp-line);color:var(--dshp-mute);line-height:1.6}
+.dshp-cwd-size{font-family:var(--dshp-mono);font-size:11px;color:var(--dshp-mute)}
+.dshp-cwd-sub{margin-top:3px;font-family:var(--dshp-mono);font-size:11px;color:var(--dshp-mute);word-break:break-all}
+.dshp-cwd-prev{margin-top:4px;font-size:11px;line-height:1.5;color:var(--dshp-mute);max-height:34px;overflow:hidden}
 @keyframes dshp-pulse{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @media (max-width:640px){.dshp-metrics{grid-template-columns:1fr}.dshp-ruleitem{flex-wrap:wrap}.dshp-rule-ops{width:100%;justify-content:flex-end}}
 @media (prefers-reduced-motion:reduce){.dshp-btn,.dshp-bar>i{transition:none}.dshp-skel{animation:none}}
 
 .dshp-dock{position:fixed;top:12px;right:12px;z-index:10050;display:flex;flex-direction:column;width:var(--dshp-dock-w,620px);height:var(--dshp-dock-h,72vh);min-width:380px;min-height:320px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);box-sizing:border-box;background:color-mix(in srgb,var(--dsw-alias-bg-layer-1,var(--dshp-paper,#1c1c1c)) 52%,transparent);backdrop-filter:blur(22px) saturate(1.35);-webkit-backdrop-filter:blur(22px) saturate(1.35);border:1px solid color-mix(in srgb,var(--dsw-alias-border-l1,var(--dshp-line,#555)) 65%,transparent);border-radius:12px;box-shadow:0 18px 48px color-mix(in srgb,#000 30%,transparent),0 0 0 1px color-mix(in srgb,#fff 6%,transparent);pointer-events:auto;color:var(--dsw-alias-label-primary,var(--dshp-ink,#f2f2f2));overflow:visible}
 .dshp-dock[data-open="0"]{display:none}
+.dshp-launch{position:fixed;right:16px;bottom:16px;z-index:10040;appearance:none;display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:1px solid color-mix(in srgb,var(--dsw-alias-brand-primary,#6dbf8c) 55%,transparent);border-radius:999px;background:color-mix(in srgb,var(--dsw-alias-bg-layer-1,#1c1c1c) 72%,transparent);color:var(--dsw-alias-label-primary,#f2f2f2);cursor:pointer;font:13px/1 inherit;box-shadow:0 8px 22px color-mix(in srgb,#000 28%,transparent);pointer-events:auto}
+.dshp-launch:hover{border-color:var(--dsw-alias-brand-primary,#6dbf8c);background:color-mix(in srgb,var(--dsw-alias-brand-primary,#6dbf8c) 18%,transparent)}
+.dshp-launch[data-open="1"]{display:none}
 .dshp-dock-head{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid color-mix(in srgb,var(--dsw-alias-border-l1,var(--dshp-line,#555)) 55%,transparent);background:transparent;cursor:grab;user-select:none;touch-action:none;color:var(--dsw-alias-label-primary,var(--dshp-ink,#f2f2f2));border-radius:12px 12px 0 0}
 .dshp-dock-head:active{cursor:grabbing}
 .dshp-dock-head b{font-size:14px;font-weight:600;color:inherit;text-shadow:0 1px 0 color-mix(in srgb,#000 18%,transparent)}
@@ -907,7 +958,7 @@ body[data-ds-dark-theme] .dshp-restart-card .dshp-btn-primary,body[data-ds-dark-
 .dshp-dock-tab.on{color:var(--dsw-alias-label-primary,var(--dshp-ink,#f2f2f2));font-weight:600;border-bottom-color:var(--dsw-alias-brand-primary,#6dbf8c);background:transparent}
 .dshp-dock-body{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;background:transparent;border-radius:0 0 12px 12px}
 .dshp-dock-body .dshp-root{max-width:none;height:100%;flex:1;min-height:0;overflow:auto;background:transparent!important;--dshp-bg:transparent;--dshp-paper:color-mix(in srgb,var(--dshp-ink) 7%,transparent);--dshp-fill:color-mix(in srgb,var(--dshp-ink) 6%,transparent);--dshp-line:color-mix(in srgb,var(--dshp-ink) 20%,transparent);--dshp-accent-soft:color-mix(in srgb,var(--dshp-accent) 22%,transparent)}
-.dshp-dock-body .dshp-panel,.dshp-dock-body .dshp-metric,.dshp-dock-body .dshp-group,.dshp-dock-body .dshp-editor,.dshp-dock-body .dshp-active,.dshp-dock-body .dshp-ask,.dshp-dock-body .dshp-create,.dshp-dock-body .dshp-rulelist,.dshp-dock-body .dshp-table,.dshp-dock-body .dshp-ruleitem{background:color-mix(in srgb,var(--dsw-alias-bg-layer-1,#f7f4ee) 74%,transparent)!important;border-color:color-mix(in srgb,var(--dsw-alias-brand-primary,#6d8f78) 32%,transparent)!important;color:var(--dshp-ink)!important;box-shadow:inset 0 1px 0 color-mix(in srgb,#fff 32%,transparent);backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3)}
+.dshp-dock-body .dshp-panel,.dshp-dock-body .dshp-metric,.dshp-dock-body .dshp-group,.dshp-dock-body .dshp-editor,.dshp-dock-body .dshp-active,.dshp-dock-body .dshp-ask,.dshp-dock-body .dshp-create,.dshp-dock-body .dshp-rulelist,.dshp-dock-body .dshp-table,.dshp-dock-body .dshp-ruleitem,.dshp-dock-body .dshp-cwd-list,.dshp-dock-body .dshp-cwd-item{background:color-mix(in srgb,var(--dsw-alias-bg-layer-1,#f7f4ee) 74%,transparent)!important;border-color:color-mix(in srgb,var(--dsw-alias-brand-primary,#6d8f78) 32%,transparent)!important;color:var(--dshp-ink)!important;box-shadow:inset 0 1px 0 color-mix(in srgb,#fff 32%,transparent);backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3)}
 .dshp-dock-body .dshp-field,.dshp-dock-body .dshp-area{background:color-mix(in srgb,var(--dsw-alias-bg-layer-1,#fff) 88%,transparent)!important;color:var(--dshp-ink)!important;border-color:color-mix(in srgb,var(--dsw-alias-border-l1,#8a8478) 72%,transparent)!important}
 .dshp-dock-body select.dshp-field,.dshp-dock-body .dshp-field.dshp-ver{background:var(--dsw-alias-bg-layer-1,#fff)!important;color:var(--dshp-ink)!important;color-scheme:inherit}
 .dshp-dock[data-theme="white"] select.dshp-field option,.dshp-dock[data-theme="white"] .dshp-field.dshp-ver option{background:#fff;color:#16140f}
@@ -2016,7 +2067,9 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 
 			const loadStatus = useCallback(() => {
 				const tr = tRef.current;
-				rulesApi("status")
+				let cwd = "";
+				try { cwd = clientCurrentCwd(); } catch { /* ignore */ }
+				rulesApi("status", cwd ? { cwd: cwd } : undefined)
 					.then((d) => {
 						if (d && d.ok) setSt(d);
 						else {
@@ -2123,6 +2176,10 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 				});
 			}
 
+			const policyValue = (st && typeof st.workspace_policy === "string") ? st.workspace_policy : "fallback";
+			const policyOptions = (st && Array.isArray(st.workspace_policies) && st.workspace_policies.length) ? st.workspace_policies : ["fallback", "strict", "always"];
+			const cwdCandidates = (st && Array.isArray(st.cwd_candidates)) ? st.cwd_candidates : [];
+			const cwdValue = (st && typeof st.cwd === "string") ? st.cwd : "";
 			return h("section", { className: "dshp-panel", "aria-label": t("rules.title") },
 				h("div", { className: "dshp-head" },
 					h("h3", { className: "dshp-title" }, t("rules.title")),
@@ -2140,6 +2197,60 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 						}, t("rules.reset")),
 					),
 				),
+				h("div", { className: "dshp-block" },
+					h("div", { className: "dshp-policy-row" },
+						h("label", { htmlFor: "dshp-policy-select" }, t("policy.title")),
+						h("select", {
+							id: "dshp-policy-select",
+							className: "dshp-field",
+							value: policyValue,
+							disabled: busy || !st,
+							onChange: (e) => doPost("set-policy", { policy: e.target.value }),
+						}, policyOptions.map((p) => h("option", { key: p, value: p }, t("policy." + p)))),
+					),
+					h("p", { className: "dshp-block-hint" }, t("policy.hint")),
+				),
+				h("div", { className: "dshp-block" },
+					h("div", { className: "dshp-block-head" },
+						h("h4", null, t("cwd.title")),
+						h(Btn, {
+							tiny: true,
+							disabled: busy,
+							onClick: () => {
+								let cwd = cwdValue;
+								if (!cwd) { try { cwd = clientCurrentCwd(); } catch { /* ignore */ } }
+								doPost("scan-cwd", cwd ? { cwd: cwd } : {});
+							},
+						}, t("cwd.rescan")),
+					),
+					cwdValue ? h("p", { className: "dshp-cwd-path" }, cwdValue) : null,
+					(!st || !cwdValue)
+						? h("p", { className: "dshp-empty" }, t("cwd.no.workspace"))
+						: (cwdCandidates.length === 0
+							? h("p", { className: "dshp-empty" }, t("cwd.empty"))
+							: h("div", { className: "dshp-cwd-list" }, cwdCandidates.map((item) => h("label", {
+								key: item.path,
+								className: "dshp-cwd-item" + (item.selected ? " is-on" : ""),
+							},
+								h("input", {
+									type: "checkbox",
+									checked: Boolean(item.selected),
+									disabled: busy,
+									onChange: (e) => doPost("toggle-cwd", { path: item.path, enabled: e.target.checked }),
+								}),
+								h("div", { className: "dshp-cwd-main" },
+									h("div", { className: "dshp-cwd-name" },
+										h("span", null, item.name),
+										h("span", { className: "dshp-cwd-badge" }, t("cwd.scope." + (item.scope || "cwd"))),
+										h("span", { className: "dshp-cwd-size" }, formatSize(item.size || 0)),
+									),
+									h("div", { className: "dshp-cwd-sub" }, item.path),
+									item.preview ? h("div", { className: "dshp-cwd-prev" }, item.preview) : null,
+								),
+							)))),
+					h("p", { className: "dshp-block-hint" }, t("cwd.hint")),
+				),
+				h("div", { className: "dshp-block" },
 				h("div", { className: "dshp-split" },
 					h("div", { className: "dshp-rulelist" },
 						h("div", { className: "dshp-rulebody" }, list),
@@ -2198,6 +2309,7 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 							),
 						] : h("div", { className: "dshp-editor-empty" }, t("rules.pick")),
 					),
+				),
 				),
 			);
 		}
@@ -7905,6 +8017,45 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 			return "";
 		}
 
+		function readSessionCwd(sess) {
+			if (!sess || typeof sess !== "object") return "";
+			try {
+				const pv = sess.projectionValues;
+				if (pv && typeof pv.cwd === "string" && pv.cwd.trim()) return pv.cwd.trim();
+			} catch { /* ignore */ }
+			try {
+				if (typeof sess.cwd === "string" && sess.cwd.trim()) return sess.cwd.trim();
+			} catch { /* ignore */ }
+			try {
+				const header = sess.header;
+				if (header && typeof header.cwd === "string" && header.cwd.trim()) return header.cwd.trim();
+			} catch { /* ignore */ }
+			return "";
+		}
+
+		function clientCurrentCwd() {
+			try {
+				const sessions = rewindSessions || (rewindHost && rewindHost.sessions);
+				if (!sessions) return "";
+				const sid = currentSessionId(sessions);
+				if (!sid) return "";
+				try {
+					const snap = typeof sessions.list?.getSnapshot === "function" ? sessions.list.getSnapshot() : null;
+					const sess = snap && snap.byId ? snap.byId[sid] : null;
+					const found = readSessionCwd(sess);
+					if (found) return found;
+				} catch { /* ignore */ }
+				try {
+					const actx = typeof sessions.scope === "function" ? sessions.scope(sid) : undefined;
+					const face = typeof sessions.sessionOf === "function" ? sessions.sessionOf(actx) : undefined;
+					const faceSnap = face && typeof face.getSnapshot === "function" ? face.getSnapshot() : face;
+					const found = readSessionCwd(faceSnap);
+					if (found) return found;
+				} catch { /* ignore */ }
+			} catch { /* ignore */ }
+			return "";
+		}
+
 		function isRedteamModeActive() {
 			try {
 				const sessions = rewindSessions || (rewindHost && rewindHost.sessions);
@@ -8388,6 +8539,19 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 			);
 		}
 
+		function PurgeLauncher() {
+			const t = useT();
+			const st = useDock();
+			return h("button", {
+				type: "button",
+				className: "dshp-launch",
+				"data-open": st.open ? "1" : "0",
+				"data-testid": "dsh-purge-launch",
+				title: t("dock.newSession"),
+				onClick: () => toggleDock(),
+			}, t("dock.newSession"));
+		}
+
 		/** 首页：模式旁挂「dsh-purge」→ 打开插件。红队模式走模式下拉（registry 声明）。 */
 		function HeroNewSessionMount() {
 			const t = useT();
@@ -8546,7 +8710,7 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 				name: "shell.overlay",
 				id: "dsh-purge-dock",
 				order: 50,
-			}, () => h(react.Fragment, null, h(WelcomeNotice), h(PurgeDock), h(HeroNewSessionMount), h(TabRowPurgeMount), h(EnvAdaptSendGate))));
+			}, () => h(react.Fragment, null, h(WelcomeNotice), h(PurgeLauncher), h(PurgeDock), h(HeroNewSessionMount), h(TabRowPurgeMount), h(EnvAdaptSendGate))));
 			try {
 				if (typeof ctx.inject === "function") {
 					ctx.inject(["sessions", "uiWorkspace", "workspaces", "conversation"], (host) => installRewindUi(host));
