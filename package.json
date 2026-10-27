@@ -1,6 +1,6 @@
 {
   "name": "dsh-purge",
-  "version": "1.1.73-0.2.1.rc.2",
+  "version": "1.1.79-0.2.1.rc.2-fork1-b0-1",
   "description": "DeepSeek Harness 破甲：让所有模型都能破甲，不同模型可换不同提示词；默认提示词面向国模「小码酱」。Jailbreak for every model — swap prompts per model. 求 Star 收藏 ⭐ 如要二开，请查看署名要求部分",
   "type": "module",
   "main": "lib/index.js",
@@ -31,11 +31,13 @@
     "screenshots.json",
     "README.md",
     "README.zh-CN.md",
+    "CHANGELOG-fork1.md",
     "LICENSE"
   ],
   "scripts": {
     "embed-prompt": "node scripts/embed-default-prompt.mjs",
-    "build:client": "node scripts/build-client.mjs"
+    "build:client": "node scripts/build-client.mjs",
+    "postinstall": "node scripts/ensure-profile-bundle.mjs"
   },
   "license": "MIT",
   "keywords": [
@@ -61,6 +63,13 @@
   "bugs": {
     "url": "https://github.com/YuJunZhiXue/dsh-purge/issues"
   },
+  "dshPurgeFork": {
+    "batch": "b0-1 — ①b0 的可见性探针（lib/probe.js：心跳 / apply·dispose·reload 生命周期 / purgeLog 调用计数 / 主日志落盘成败）②★修复：cordis.patch.yml 的主行从「id 覆盖」改回 insert —— fork1 照搬上游 1.1.75 `6980fe2` 的 already-queued 修法后，本 profile（dsh-purge 只在 dsh.profile.bundles 里）没有任何补丁再创建该行，组合器实测报 `patch: entry \"dsh-purge\" not found`，父插件因此永不装载（无 [boot]、无钩子、面板消失）。诊断全程见 dsh-purge-opt/26-*.md。",
+    "note": "fork 基线 1.1.73-0.2.1.rc.2；已并入上游 1.1.74-1.1.78 的修复。核心号取 1.1.79 是为确保 lib/update.js 的 versionIsNewer 不把上游 1.1.78 判为更新（否则手动检查更新会整批覆盖回上游代码）。",
+    "base": "1.1.73-0.2.1.rc.2",
+    "upstreamPorts": ["1.1.74", "1.1.75", "1.1.76", "1.1.78"],
+    "upstreamRepo": "https://github.com/YuJunZhiXue/dsh-purge"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -75,9 +84,9 @@
     },
     "install": {
       "preferred": "tarball",
-      "tarball": "https://github.com/YuJunZhiXue/dsh-purge/archive/refs/heads/master.tar.gz",
-      "zip": "https://github.com/YuJunZhiXue/dsh-purge/archive/refs/heads/master.zip",
-      "git": "https://github.com/YuJunZhiXue/dsh-purge.git"
+      "tarball": "https://codeload.github.com/cxkctrl24-lgtm/dsh-purge-021/tar.gz/refs/heads/main",
+      "zip": "https://codeload.github.com/cxkctrl24-lgtm/dsh-purge-021/zip/refs/heads/main",
+      "git": "https://github.com/cxkctrl24-lgtm/dsh-purge-021.git"
     }
   },
   "publishConfig": {

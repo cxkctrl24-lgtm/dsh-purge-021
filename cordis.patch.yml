@@ -30,9 +30,22 @@
     personaPrefix: ""
     personaSuffix: Your working directory is {{cwd}}.
 
-- id: dsh-purge
-  inject: [systemPrompt, tools]
-
+# ── [b0-1 修复] 主行必须由 insert 创建，不能靠 id 覆盖 ──────────────────────
+# 本 profile 里 dsh-purge 只出现在 `dsh.profile.bundles` 中，而 **bundles 只是补丁层提供者**：
+# 组合器把每个 bundle 的 patch 列表应用在一个**空 entry 列表**上（原文见 @deepseek-ai/dsh-app-boot
+# 的 profile 模块注释：「the tree is composed by applying each bundle's patch lists in
+# `dsh.profile.bundles` order over an empty entry list」）。bundle 本身**不产生插件行**。
+#
+# fork1 照搬上游 1.1.75 `6980fe2` 的「already queued」修法，把这条 insert 改成了
+# 「`- id: dsh-purge` 覆盖 + config」。在本机实测的后果是组合器只报：
+#     dsh: [dsh-purge] patch: entry "dsh-purge" not found
+# 于是**父插件永不装载**：没有 `[boot]`、没有装配钩子、客户端面板消失
+# （b0 探针实测只有 `[life.redteam.apply]`，没有 `[life.module]` —— 模块连求值都没有）。
+#
+# 上游那种写法只在「Hub 一键装/市场安装已经把这一行 insert 过」的 profile 里成立；本 profile
+# 不是那种（我们只把 dsh-purge 放进了 bundles）。所以这里恢复 1.1.73 的写法：
+# 主行放进 insert，带 name / inject / config。
+# 回滚：把本区块换回 `- id: dsh-purge` + inject + config 的覆盖写法即可（等价于停用本插件）。
 - insert:
     - id: dsh-purge
       name: 'dsh-purge'
