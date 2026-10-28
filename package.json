@@ -1,7 +1,7 @@
 {
   "name": "dsh-purge",
   "version": "1.1.79-0.2.1.rc.2-fork1-b0-2",
-  "description": "DeepSeek Harness 破甲：让所有模型都能破甲，不同模型可换不同提示词；默认提示词面向国模「小码酱」。Jailbreak for every model — swap prompts per model. 求 Star 收藏 ⭐ 如要二开，请查看署名要求部分",
+  "description": "dsh-purge fork（cxkctrl24-lgtm/dsh-purge-021）：DeepSeek Harness 破甲 + 网络安全红队评测插件。上游 YuJunZhiXue/dsh-purge 的维护分支，已并入上游 1.1.74–1.1.78 的修复，并追加宿主退出诊断、asar 重启兜底、注入正文覆盖修复、装配性能优化与可见性探针。默认提示词面向国模「小码酱」；换模型可换提示词。Jailbreak + red-team eval for DeepSeek Harness (community fork).",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -41,6 +41,8 @@
   },
   "license": "MIT",
   "keywords": [
+    "dsh-purge-fork",
+    "fork",
     "dsh",
     "dsh-plugin",
     "dsh-plugins",
@@ -57,11 +59,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/YuJunZhiXue/dsh-purge.git"
+    "url": "git+https://github.com/cxkctrl24-lgtm/dsh-purge-021.git"
   },
-  "homepage": "https://github.com/YuJunZhiXue/dsh-purge#readme",
+  "homepage": "https://github.com/cxkctrl24-lgtm/dsh-purge-021#readme",
   "bugs": {
-    "url": "https://github.com/YuJunZhiXue/dsh-purge/issues"
+    "url": "https://github.com/cxkctrl24-lgtm/dsh-purge-021/issues"
   },
   "dshPurgeFork": {
     "batch": "b0-2 — 删掉 scripts.postinstall（`ensure-profile-bundle` 改名为普通脚本 `npm run ensure-profile-bundle`）：pnpm 11 默认拦截依赖的构建脚本，从插件市场装本包会卡在「构建脚本被 pnpm 默认拦截，点击放行构建脚本并重试」；而该脚本只在 `pnpm add` 场景补 `dsh.profile.bundles`，本 profile 的 bundles 是手工维护的，去掉即可消除安装摩擦。代码内容与 b0-1 完全一致，只有 package.json 的 scripts/version 两处不同。b0-1 — ①b0 的可见性探针（lib/probe.js：心跳 / apply·dispose·reload 生命周期 / purgeLog 调用计数 / 主日志落盘成败）②★修复：cordis.patch.yml 的主行从「id 覆盖」改回 insert —— fork1 照搬上游 1.1.75 `6980fe2` 的 already-queued 修法后，本 profile（dsh-purge 只在 dsh.profile.bundles 里）没有任何补丁再创建该行，组合器实测报 `patch: entry \"dsh-purge\" not found`，父插件因此永不装载（无 [boot]、无钩子、面板消失）。诊断全程见 dsh-purge-opt/26-*.md。",

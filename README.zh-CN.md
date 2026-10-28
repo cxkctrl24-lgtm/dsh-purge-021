@@ -4,36 +4,33 @@
 
 <h1 align="center">⚔️ DeepSeek Harness 网络安全红队工具（dsh-purge）</h1>
 
-<p align="center"><strong>Version 1.1.71</strong></p>
+<p align="center"><strong>Version 1.1.79-0.2.1.rc.2-fork1-b0-2</strong></p>
 
 <p align="center">
   <em>DeepSeek Harness 破甲：让所有模型都能破甲，不同模型可换不同提示词；默认提示词面向国模「小码酱」。Jailbreak for every model — swap prompts per model. 求 Star 收藏 ⭐ 如要二开，请查看署名要求部分</em>
 </p>
 
 <p align="center">
-  <a href="https://github.com/YuJunZhiXue/dsh-purge/stargazers"><img src="https://img.shields.io/github/stars/YuJunZhiXue/dsh-purge?logo=github&label=Stars" alt="GitHub stars"></a>
-  <a href="https://github.com/YuJunZhiXue/dsh-purge/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-65a30d?style=flat" alt="MIT license"></a>
-  <a href="https://awesome-dsh-plugin.com"><img src="https://awesome-dsh-plugin.com/badge.svg" alt="awesome · DSH plugin"></a>
-  <a href="https://deepseek.stream/plugins/dsh-purge"><img src="https://img.shields.io/badge/Hub-dsh--purge-1a73e8" alt="DeepSeek Harness Hub"></a>
-  <a href="https://www.deepseek.com/harness/"><img src="https://img.shields.io/badge/dsh-0.2.0--rc.2-blue" alt="DSH"></a>
+  <a href="https://github.com/cxkctrl24-lgtm/dsh-purge-021/stargazers"><img src="https://img.shields.io/github/stars/cxkctrl24-lgtm/dsh-purge-021?logo=github&label=Stars" alt="GitHub stars"></a>
+  <a href="https://github.com/cxkctrl24-lgtm/dsh-purge-021/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-65a30d?style=flat" alt="MIT license"></a>
+  <a href="https://github.com/cxkctrl24-lgtm/dsh-purge-021"><img src="https://img.shields.io/badge/fork-of-YuJunZhiXue%2Fdsh-purge-8957e5" alt="fork"></a>
+  <a href="https://www.deepseek.com/harness/"><img src="https://img.shields.io/badge/dsh-0.2.1--rc.2-blue" alt="DSH"></a>
   <br>
   <img src="https://img.shields.io/badge/Node.js-%3E%3D18-339933?logo=node.js&logoColor=fff" alt="Node.js">
   <img src="https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=000" alt="JavaScript">
 </p>
 
 <p align="center">
-  <a href="https://dsh-plugin.org/plugins/yujunzhixue/dsh-purge"><img src="https://dsh-plugin.org/badges/listed.svg" alt="Listed on dsh-plugin.org"></a>
-</p>
-
-<p align="center">
   <a href="README.md">English</a> | <a href="README.zh-CN.md">中文</a>
 </p>
 
-> **官方 Web 和官方桌面端都支持。** 官方 `dsh web` 用 profile `web`；官方桌面 EXE（DeepSeek Harness **0.2.0-rc.2**）用 profile `desktop`。两边分开安装、分开点「应用」。当前版本只适配 dsh 0.2；更早的 dsh 用对应的老版本插件。社区桌面端不维护。
+> **本仓库是社区 fork**，上游 [YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge)；本分支（`cxkctrl24-lgtm/dsh-purge-021`）在其基础上维护 dsh `0.2.1-rc.2` 的适配与修复，明细见 [CHANGELOG-fork1.md](CHANGELOG-fork1.md)。**未发布到 npm**，请从本仓库安装（见 [安装](#install)）。设计与原始署名归上游。
+
+> **官方 Web 和官方桌面端都支持。** 官方 `dsh web` 用 profile `web`；官方桌面 EXE（DeepSeek Harness **0.2.1-rc.2**）用 profile `desktop`。两边分开安装、分开点「应用」。当前版本只适配 dsh 0.2；更早的 dsh 用对应的老版本插件。社区桌面端不维护。
 >
 > 写进 profile 还不会改宿主。点会话标题旁的 **dsh-purge** → **清洗** → **应用**。成功会自动重启；补丁没打完不重启。重启后新开一轮对话，注入才进当前会话。
 >
-> Node.js **≥18**。Windows 无闪窗需要 **Node ≥22**。插件市场一键安装和下面的命令都走 npm 包 `dsh-purge`。
+> Node.js **≥18**。Windows 无闪窗需要 **Node ≥22**。本 fork **不发布到 npm**，下面的命令直接从本仓库安装。
 
 ## 目录
 
@@ -81,7 +78,7 @@ Harness 不只是把问题交给模型。它还会在运行时改提示词、审
 | **清洗**           | 分组查看补丁，应用、还原、卸载；编辑提示词和多套规则                      |
 | **演练台**          | 正式版内置。授权后查看资产、技能和本机环境。只用于你有权管理的本机、离线靶标或已书面授权的演练 |
 | **宿主策略**         | 调整默认文案、权限策略和工具上限。官方能力保留，不另写一套身份                 |
-| **启动时**          | 自动再检查并应用。npm 升级盖掉 `node_modules` 之后不用手改文件       |
+| **启动时**          | 自动再检查并应用。升级盖掉 `node_modules` 之后不用手改文件       |
 
 
 不写死盘符。按 `$DSH_HOME`、dsh 启动器旁边的 `.dsh`，再退回 `~/.dsh`。不改 Harness 源码仓库，在 **dsh-purge** 的「清洗」里点「应用」才写入。身份来自插件里的加密提示词，也就是提示词框默认显示的那一份。不读取宿主磁盘上的提示词文件。
@@ -94,7 +91,7 @@ Harness 不只是把问题交给模型。它还会在运行时改提示词、审
 
 ## 署名要求
 
-**借用本项目的名称、思路、代码或提示词，必须署名，并写明来源仓库：** [YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge)。
+**借用本项目的名称、思路、代码或提示词，必须署名，并写明来源仓库：** [YuJunZhiXue/dsh-purge](https://github.com/YuJunZhiXue/dsh-purge)。本仓库是它的 fork，fork 侧新增内容见 [CHANGELOG-fork1.md](CHANGELOG-fork1.md)，同样适用本署名要求。
 
 不署名、隐瞒来源、改头换面据为己有，作者将依法追究责任。
 
@@ -142,8 +139,8 @@ Harness 不只是把问题交给模型。它还会在运行时改提示词、审
 
 最新版只支持 **dsh 0.2**，不要拿它去打 0.1.x。
 
-- **dsh 0.2**（官方桌面 **0.2.0-rc.2** / 官方 `dsh web`）：用 **1.1.40** 及以上。本页命令装的就是这一档。
-- **dsh 0.1.7**（含 rc.1 / rc.2）：用 **1.1.39** 及更早 —— 在 [Releases](https://github.com/YuJunZhiXue/dsh-purge/releases) 里选对应标签。
+- **dsh 0.2.1-rc.2**（官方桌面 / 官方 `dsh web`）：本 fork 的目标版本，即 **`1.1.79-0.2.1.rc.2-fork1-b0-2`**。
+- **dsh 0.1.7**（含 rc.1 / rc.2）：用 **1.1.39** 及更早 —— 那些标签在[上游 Releases](https://github.com/YuJunZhiXue/dsh-purge/releases)，本 fork 不带。
 
 对不上的补丁会显示待应用或跳过，不会乱改文件。
 
@@ -155,17 +152,17 @@ Harness 不只是把问题交给模型。它还会在运行时改提示词、审
 
 | 你正在用 | profile | 命令 |
 |---|---|---|
-| 官方 `dsh web` | `web` | `dsh plugin --profile web add dsh-purge` |
-| 官方桌面 EXE | `desktop` | `dsh plugin --profile desktop add dsh-purge` |
+| 官方 `dsh web` | `web` | `dsh plugin --profile web add https://codeload.github.com/cxkctrl24-lgtm/dsh-purge-021/tar.gz/refs/heads/main` |
+| 官方桌面 EXE | `desktop` | `dsh plugin --profile desktop add https://codeload.github.com/cxkctrl24-lgtm/dsh-purge-021/tar.gz/refs/heads/main` |
 
-当前目录已经是本仓库时，把包名换成 `add .`。`dsh` 不在 PATH 时走 [手动安装](#manual)。registry 上不去：同一个 `--profile`，把目标换成 `https://github.com/YuJunZhiXue/dsh-purge/archive/refs/heads/master.tar.gz`。
+当前目录已经是本仓库时把目标换成 `add .`。`dsh` 不在 PATH 时走 [手动安装](#manual)。预打包的 `.tgz` 在 [Releases](https://github.com/cxkctrl24-lgtm/dsh-purge-021/releases)，把文件路径交给 `add` 即可（同一个 `--profile`）。
 
-[插件市场](https://dsh-plugin.org/plugins/yujunzhixue/dsh-purge) 一键安装会按本仓库反查 npm，命中后装 `dsh-purge`。目录页可能仍写 `github:` —— 按钮若退回 git，用上表命令。
+本 fork 不在插件市场目录里，用上表命令安装。（上游保留着[插件市场](https://dsh-plugin.org/plugins/yujunzhixue/dsh-purge)一键安装，那条装的是上游代码，不是本 fork。）
 
 桌面客户端也可以点按钮（`dsh://` 唤起）：
 
 <p align="center">
-  <a href="dsh://plugin/install?id=dsh-purge&name=dsh-purge&version=1.1.71&repo=YuJunZhiXue%2Fdsh-purge&permissions=%E7%B3%BB%E7%BB%9F%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%B3%A8%E5%85%A5%2C%E6%9C%AC%E6%9C%BA%E8%A1%A5%E4%B8%81%2C%E8%AE%BE%E7%BD%AE%E9%A1%B5&downloadUrl=https%3A%2F%2Fgithub.com%2FYuJunZhiXue%2Fdsh-purge%2Farchive%2Frefs%2Fheads%2Fmaster.tar.gz"><strong>唤起客户端一键安装</strong></a>
+  <a href="dsh://plugin/install?id=dsh-purge&name=dsh-purge&version=1.1.79-0.2.1.rc.2-fork1-b0-2&repo=cxkctrl24-lgtm%2Fdsh-purge-021&permissions=%E7%B3%BB%E7%BB%9F%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%B3%A8%E5%85%A5%2C%E6%9C%AC%E6%9C%BA%E8%A1%A5%E4%B8%81%2C%E8%AE%BE%E7%BD%AE%E9%A1%B5&downloadUrl=https%3A%2F%2Fcodeload.github.com%2Fcxkctrl24-lgtm%2Fdsh-purge-021%2Ftar.gz%2Frefs%2Fheads%2Fmain"><strong>唤起客户端一键安装</strong></a>
 </p>
 
 ### 装完都要做这三步
@@ -193,17 +190,17 @@ Web 的控件只动 Web，桌面端的只动桌面应用。不要在一个宿主
 
 <!-- AI-AGENT-START -->
 
-安装 DeepSeek Harness 插件 `dsh-purge`，只装到 Web profile。不要全盘搜索，不要读或改其它文件，不要应用设置，也不要重启应用。不要装到桌面 profile。
+安装 DeepSeek Harness 插件 `dsh-purge`（社区 fork `cxkctrl24-lgtm/dsh-purge-021`），只装到 Web profile。不要全盘搜索，不要读或改其它文件，不要应用设置，也不要重启应用。不要装到桌面 profile。
 
 **Web 端（官方 `dsh web`）**
 
 `dsh` 不在 PATH 就告诉用户后停止。
 
 ```sh
-dsh plugin --profile web add dsh-purge
+dsh plugin --profile web add https://codeload.github.com/cxkctrl24-lgtm/dsh-purge-021/tar.gz/refs/heads/main
 ```
 
-当前目录已是本仓库时改用 `dsh plugin --profile web add .`。npm registry 上不去再用 `dsh plugin --profile web add https://github.com/YuJunZhiXue/dsh-purge/archive/refs/heads/master.tar.gz`。
+当前目录已是本仓库时改用 `dsh plugin --profile web add .`。
 
 命令结束后，提醒用户：完全退出并重启 `dsh web`，再点会话标题旁的 **dsh-purge**，在「清洗」里点「应用」。然后停止。
 
@@ -240,10 +237,10 @@ $cands | Select-Object -Unique | Where-Object { $_ -and (Test-Path (Join-Path $_
 **2. 把插件放到 `$DSH_HOME/plugins/dsh-purge`**（目录名必须是 `dsh-purge`，其 `package.json` 里 `"name"` 也必须是 `dsh-purge`）。
 
 ```sh
-git clone https://github.com/YuJunZhiXue/dsh-purge.git "$DSH_HOME/plugins/dsh-purge"
+git clone https://github.com/cxkctrl24-lgtm/dsh-purge-021.git "$DSH_HOME/plugins/dsh-purge"
 ```
 
-没有 git：下载 [master.tar.gz](https://github.com/YuJunZhiXue/dsh-purge/archive/refs/heads/master.tar.gz)，解压后把 `dsh-purge-master` 改名为 `dsh-purge`，整夹放到 `plugins` 下。已有本仓库副本就复制整个目录，不要只拷几个 `.js`。
+没有 git：下载 [main.tar.gz](https://codeload.github.com/cxkctrl24-lgtm/dsh-purge-021/tar.gz/refs/heads/main)，解压后把 `dsh-purge-021-main` 改名为 `dsh-purge`，整夹放到 `plugins` 下。已有本仓库副本就复制整个目录，不要只拷几个 `.js`。
 
 **3. 只改对应 profile 的 `package.json`，先备份。** Web → `$DSH_HOME/profiles/web/package.json`；桌面 → `$DSH_HOME/profiles/desktop/package.json`。**只追加两处**，原有依赖和 bundle 全部留着：
 
@@ -388,7 +385,7 @@ dsh-purge --edit
 purge_status   purge_apply   purge_revert
 ```
 
-设置页「应用」成功后会自动重启，以加载已改的包文件；也可手动点「重启」。补丁标题下有正式版和测试版。测试版跟 `beta` 分支。点「切换到正式版」会装回 master，并清掉钉选。正式版里选旧版本会固定在该版本，要回到最新再点「更新」。旧的测试标签不再列出。
+设置页「应用」成功后会自动重启，以加载已改的包文件；也可手动点「重启」。补丁标题下有正式版和测试版。测试版跟 `beta` 分支。点「切换到正式版」会装回 `main`（本 fork 的正式分支），并清掉钉选。正式版里选旧版本会固定在该版本，要回到最新再点「更新」。旧的测试标签不再列出。
 
 输入框旁的「回退一次」和「回退上一轮」都留在当前这条对话里，不另开分支。已发送的那句会回到输入框，这一轮已经发出的内容和已完成的任务会从当前对话撤掉，改字后**重新发送**即可。从 **1.1.61** 起，多轮对话后回退按**当前这一轮**定位，不会又退到第一条用户消息。聊天里 `/rewind` 同样可用。
 
@@ -550,14 +547,14 @@ flowchart LR
 
 ## 更新
 
-每一版改了什么、安装包在 [Releases](https://github.com/YuJunZhiXue/dsh-purge/releases)。发新版时把 `package.json` 的版本号改掉，中英文说明写进 `release-notes.md`，推到 `master` 就会自动打包。同一版本再推送不会重复发包。
+每一版改了什么、预打包的 `.tgz` 都在 [Releases](https://github.com/cxkctrl24-lgtm/dsh-purge-021/releases)；fork 侧改动明细见 [CHANGELOG-fork1.md](CHANGELOG-fork1.md)。同一版本重复推送不会重复发资产。
 
 ## 说明
 
 - 改动范围是本机 `@deepseek-ai/*` 包里的渲染文案、默认策略和执行逻辑，以及用户目录下的覆盖文件与规则集。
 - 升级后原文对不上会显示跳过，这次应用仍算完成，不会乱改。
 - 不改动非 `@deepseek-ai` 的第三方插件源仓库（启动时的 CMD 无感会**尽力**修补已装的 doctor / market / 梁神 / mnemon，属运行时补丁）。
-- 安装走 npm 包名 `dsh-purge`：`dsh plugin --profile web add dsh-purge` 或 `dsh plugin --profile desktop add dsh-purge`。当前目录已是本仓库时 `add .`。registry 上不去再加 master.tar.gz。插件市场一键安装走同一个 npm 包。
+- 本 fork **不发布到 npm**：用 `dsh plugin --profile <web|desktop> add https://codeload.github.com/cxkctrl24-lgtm/dsh-purge-021/tar.gz/refs/heads/main`，或在 clone 里 `add .`，或把 Release 里的 `.tgz` 路径交给 `add`。
 
 ---
 
