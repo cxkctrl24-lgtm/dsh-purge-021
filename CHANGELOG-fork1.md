@@ -152,3 +152,20 @@ patch: entry "dsh-purge" not found
 
 - `lib/core.js.bak-before-f1migration` 是打包时的临时备份，**不进仓库**（README 与 `.gitignore` 已覆盖 `node_modules/`、`*.tgz`、`*.log`）。
 - `scripts/ensure-profile-bundle.mjs` 的 `postinstall` 会被 pnpm 默认拦截，需在 profile 的 `pnpm-workspace.yaml` 的 `allowBuilds` 里放行；且**键是文件说明符**（`dsh-purge@file:vendor/<tgz>`），换文件名就会多出一条待决项。
+
+## 九、b0-2（2026-10-28）：去掉 `postinstall`，改为可手动调用的脚本
+
+**动机**：pnpm 11 默认拦截依赖的构建脚本。从 DSH 插件市场装本包时，pnpm 把 `scripts.postinstall` 记为待审批，安装流程停在「构建脚本被 pnpm 默认拦截（dsh-purge），点击「放行构建脚本并重试」即可放行并重装」——每换一次 tgz 文件名，`allowBuilds` 的键（文件说明符）就多一条待决项，用户必须逐次点放行。
+
+**处置**：
+
+- `package.json`：`scripts.postinstall` → `scripts.ensure-profile-bundle`（同名普通脚本，**不再自动触发**）。要手工补 `dsh.profile.bundles` 时执行 `npm run ensure-profile-bundle`。
+- 其余与 b0-1 **逐字节相同**（`lib/` 一个字节都没动，含 b0 探针、`cordis.patch.yml` 的 insert 修法、#83 的 b0-2 迁移腿）。
+  > 对照口径：与**仓库里的 b0-1 树**比，只有 `package.json`（version + scripts）与本文不同。与**发布出去的 b0-1 tgz**比，本包还多一样东西——那次打包发生在迁移腿落盘之前，所以 b0-1 tgz 里的 #83 只有 F1 载荷、没有迁移腿；b0-2 是第一次把迁移腿真正发出去的构建。装机升到 b0-2 之后，#83 才会从「假 applied」变成真修（判据见 §8.3）。
+- 版本号 → `1.1.79-0.2.1.rc.2-fork1-b0-2`，便于 `purge_status` 里区分线上跑的是哪份。
+
+**代价（已接受）**：`pnpm add dsh-purge@file:…` 之后不会再自动往 `~/.dsh/profiles/<profile>/package.json` 的 `dsh.profile.bundles` 里补行。本机该字段本来就是手工维护的，且市场安装路径由宿主自己写 bundles，不依赖此脚本。
+
+### 9.1 §8.4 的第二条已作废
+
+§8.4 曾要求「在 `allowBuilds` 里放行 `dsh-purge@file:vendor/<tgz>`」。b0-2 起**不再需要**：包里没有任何构建脚本，`allowBuilds` 里那两条 `dsh-purge` 键可以留着（对无脚本的包不生效）也可以删掉。
