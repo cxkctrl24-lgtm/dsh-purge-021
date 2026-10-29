@@ -1,3 +1,171 @@
+# 1.1.82
+
+## 中文
+
+- 版本 **1.1.82**。修复 bug，修复稳定性。
+- **#180**：修复 profile 的 `pnpm-workspace.yaml` `allowBuilds` 被反复写坏（`dsh-purge@https: true` 畸形键 → `ERR_PNPM_INVALID_VERSION_UNION`，重复键 → `duplicated mapping key`）。
+  - URL 键解析不再被冒号截断；写回含 `://` 的键自动加引号。
+  - 重写只保留精确等于期望键的 `dsh-purge@*`，旧污染键（畸形的、过期的版本/commit URL）自动清掉，不用手工修。
+  - 期望键优先从 profile 的 `pnpm-lock.yaml` 读实际解析的 tarball URL（固定 commit 安装也不再有双 URL 键），读不到才退回 `package.json`。
+  - 重写结果先过最小 YAML 校验（键不重复、round-trip 无损），不过就不写盘；健康文件零写入，启动不再反复重写。
+
+## English
+
+- **1.1.82**. Bug fixes and stability.
+- **#180**: stop rewriting the profile `pnpm-workspace.yaml` `allowBuilds` into garbage (`dsh-purge@https: true` malformed key → `ERR_PNPM_INVALID_VERSION_UNION`; duplicated keys → `duplicated mapping key`).
+  - URL keys no longer truncate at the first colon; keys containing `://` are written back quoted.
+  - Rewrites keep only `dsh-purge@*` keys exactly equal to the wanted set; stale polluted keys (malformed, old version/commit URLs) self-heal away on the next ensure.
+  - The wanted key prefers the tarball URL actually resolved in the profile `pnpm-lock.yaml` (fixed-commit installs no longer get a duplicate URL key); falls back to `package.json`.
+  - Rewritten output passes a minimal YAML check first (no duplicate keys, lossless round-trip); healthy files are never written again, so boot no longer rewrites each run.
+
+# 1.1.81
+
+## 中文
+
+- 版本 **1.1.81**。修复 bug，修复稳定性。
+- **#174**：识别 DSH NEXT 社区桌面（路径、进程、快捷方式、密封 asar）。`DSH_SURFACE=web` 也不再误报；不把任意 `app.asar` 当桌面。
+- **#175**：补 ip / 计分 / settle 单测，删草稿文档和 `.bak`。`npm test` 23 条全过。
+- **#171 / #173**：zip 目录条目和 skills `fs` 导入已在 1.1.80，本版用单测锁住。
+
+## English
+
+- **1.1.81**. Bug fixes and stability.
+- **#174**: detect DSH NEXT desktop (paths, process, shortcuts, sealed asar). Still desktop when `DSH_SURFACE=web`. A random `app.asar` is not treated as the host.
+- **#175**: add ip / score / settle tests; drop draft docs and `.bak`. `npm test` is 23/23 green.
+- **#171 / #173**: zip directory entries and the skills `fs` import shipped in 1.1.80; this release locks them with tests.
+
+# 1.1.80
+
+## 中文
+
+- 版本 **1.1.80**。修复 bug，修复稳定性。
+- **#168**：pnpm 12 的 `allowBuilds` 把 `dsh-purge@codeload...` 也写成 `true`，装别的插件不再留下 `set this to true or false`。
+- **#169**：芯片 / 应用按钮强制系统字体和实色字，不再被宿主图标字体吃掉。
+- **#170**：纯 Node 解 zip 时目录条目建目录，不再写成同名空文件导致 EEXIST。
+- **#172**：`lib/skills.js` 补上 `fs`，#54 软链重叠守卫重新生效。
+- **#176**：写清 **不支持 DSH 0.2.1-rc.3 及更新的 rc**，请退回 **0.2.1-rc.2**。对不上的补丁待应用或跳过，不乱改文件。
+
+## English
+
+- **1.1.80**. Bug fixes and stability.
+- **#168**: pnpm 12 `allowBuilds` also sets `dsh-purge@codeload...` to `true`, so installing other plugins no longer leaves `set this to true or false`.
+- **#169**: chip / Apply buttons force a system font and solid text color so the host icon font cannot hide the label.
+- **#170**: Node zip fallback creates directories for directory entries instead of empty files (no more EEXIST).
+- **#172**: import `fs` in `lib/skills.js` so the #54 symlink overlap guard works again.
+- **#176**: **DSH 0.2.1-rc.3 and newer RCs are not supported.** Stay on **0.2.1-rc.2**. Unmatched patches stay pending or skipped.
+
+# 1.1.79
+
+## 中文
+
+- 版本 **1.1.79**。修复 bug，修复稳定性。
+- **#165**：社区版 DS Bot / DeepSeek Bot 按桌面宿主识别（`ds-bot` profile、Electron asar），不再误报 `set DSH_BASE`。
+- **#166**：pnpm 12 拦 `postinstall` 时补 `allowBuilds`，并写清 `--allow-build=dsh-purge` / `approve-builds`。
+- **#167**：升级后补回 `bundles` + 本体 insert，空芯片不再把启动钮藏掉，1.1.74 有的按钮会回来。
+- 应用/还原/卸载进度条跟 job 阶段；主智能体和子智能体同一份注入、权限和能力协议。
+- 新建会话不再把 `dsh-purge` 芯片甩到行尾。
+
+## English
+
+- **1.1.79**. Bug fixes and stability.
+- **#165**: community DS Bot / DeepSeek Bot is a desktop host (`ds-bot` profile, Electron asar); no more false `set DSH_BASE`.
+- **#166**: pnpm 12 skipped `postinstall`; write `allowBuilds` and document `--allow-build=dsh-purge`.
+- **#167**: restore `bundles` + body insert after upgrade so the 1.1.74 button comes back.
+- Apply / revert / uninstall progress follows the job; main and subagents share inject, permission, and capability text.
+- New-session no longer shoves the `dsh-purge` chip to the far right.
+
+# 1.1.78
+
+## 中文
+
+- 版本 **1.1.78**。修复 bug：停用/卸载后无法新建会话。
+- **#108**：停用或卸载时把 `agent-preset-registry.selectedDefault` 从 `redteam` 改回 `standard`，并清掉 `$DSH_HOME/.agent-presets/redteam`。热重载不会冲掉用户设的红队默认。
+- 卸载同时处理 `dsh.profile.bundles` / `dsh.profile.plugins`，桌面 profile 不再残留 `dsh-purge`。
+
+## English
+
+- **1.1.78**. Bug fix: new sessions after disable/uninstall.
+- **#108**: on disable or uninstall, reset `agent-preset-registry.selectedDefault` from `redteam` to `standard`, and remove `$DSH_HOME/.agent-presets/redteam`. Hot reload keeps a user-chosen redteam default.
+- Uninstall also strips `dsh.profile.bundles` / `dsh.profile.plugins`.
+
+# 1.1.77
+
+## 中文
+
+- 版本 **1.1.77**。修复 bug，修复稳定性。
+- 修长红队任务仍打公网：`渗透测试` / `红队` / `打点` / `拿站` 纳入门禁；正文按窗扫到 256KB，目标写在后半段也能拦。
+- 修后续步骤漏拦：每一步看工具参数，`tools/pre-execute` 遇到公网 IP/域名直接停轮。
+- 长文正则按窗扫，避免整篇回溯把事件循环卡死。
+
+## English
+
+- **1.1.77**. Bug fixes and stability.
+- Long red-team tasks no longer reach the public internet: `渗透测试` / red-team / 打点 / 拿站 are gated; the body is scanned in windows up to 256KB.
+- Later steps are gated too: tool arguments are checked, and `tools/pre-execute` stops on a public IP or name.
+- Long-text regex runs in windows so a huge paste cannot stall the event loop.
+
+# 1.1.76
+
+## 中文
+
+- 版本 **1.1.76**。适配只走 pnpm 的机器：在 profile 目录 `pnpm add` codeload 压缩包即可，`postinstall` 自动把 `dsh-purge` 写进 `bundles`。
+- 安装地址改成 `codeload.github.com`，避开 `github.com/archive` 的 302（pnpm 会 `fetch failed`）。不要 `pnpm add dsh-purge`（npm 仓库没有这个名字）。
+
+## English
+
+- **1.1.76**. pnpm-only hosts: `pnpm add` the codeload tarball inside the profile; `postinstall` writes `dsh-purge` into `bundles`.
+- Install URL is `codeload.github.com` so pnpm does not die on the `github.com/archive` 302. Do not `pnpm add dsh-purge` — that name is not on the npm registry.
+
+# 1.1.75
+
+## 中文
+
+- 版本 **1.1.75**。修 Hub 市场一键安装报 `already queued: dsh-purge`：`cordis.patch.yml` 不再把已经在 bundles 里的本体再 insert 一遍。
+- README 把安装写成三步：只用 GitHub 压缩包命令，不走插件市场 / `github:` / npm。
+
+## English
+
+- **1.1.75**. Fix Hub one-click `already queued: dsh-purge`: the bundle patch no longer inserts the plugin that is already in `bundles`.
+- README install is three steps: GitHub tarball only; skip the plugin market / `github:` / npm.
+
+# 1.1.74
+
+## 中文
+
+- 版本 **1.1.74**，优化若干拦截与加载 bug。适配 DSH **0.2.1-rc.2**（0.2.0 仍可用）。
+- 修靶场门禁：域名先解析再判 IP，不再靠 `.lab` / `.htb` 后缀放行；`hosts` 指到公网、解析失败、混有公网，一律拦。
+- 修身份绕过：`169.254` 云元数据不再当靶场；`::ffff:公网` 拆开再判；攻击句不写目标不再放行。
+- 修 DSH 0.2.1 预设加载：对象 schema 补 `additionalProperties`，装过的 redteam 预设清掉残留 `toolFilter`。
+- 修演练台被改成英文：中文页签收回。
+- 禁止制作外挂：会话门口硬拦，提示词 Rule 1 改为禁止。
+
+## English
+
+- **1.1.74**, bug-fix release. Target DSH **0.2.1-rc.2** (0.2.0 still works).
+- Lab gate: resolve first, then allow only private IPs. Suffixes are not an allow list.
+- Close identity holes: drop link-local metadata, unwrap IPv4-mapped IPv6, deny unnamed attack tasks.
+- DSH 0.2.1 preset load: seal object schemas; strip leftover `toolFilter`.
+- Restore Chinese drill-console tabs.
+- Game cheats are forbidden at the session gate.
+
+# 1.1.73
+
+## 中文
+
+- 版本 **1.1.73**，适配 DSH **0.2.1-rc.2**（0.2.0 仍可用）。
+- 0.2.1 兼容已落地：`{{cwd}}` 静态回退、补丁 #40、`toolFilter` 删除、`dsh-tools` 解析、hostFs fd 直通、桌面换包不自杀、`file:` 归档更新、Ctrl+Enter steer。
+- 界面操作文案补齐英文（演练台、清洗面板、补丁表、计分/技能指引）；`zh` 语言包与模型提示词保持中文。靶场默认拦截的 `own.hint` 仍按本仓库策略。
+- 随包技能 `paper-autopilot` + `npm run install:skill`。
+- 红队证据账本：`claimed → observed` 核实链、`ResidualUnknown`、8 个 `redteam_evidence_*` / `redteam_unknown_*` 工具。
+
+## English
+
+- **1.1.73**, target DSH **0.2.1-rc.2** (0.2.0 still works).
+- 0.2.1 compatibility in-tree: `{{cwd}}` fallback, patch #40, drop `toolFilter`, host `dsh-tools` resolve, hostFs fd pass-through, desktop helper self-kill fix, `file:` archive update, Ctrl+Enter steer.
+- Operator-facing UI copy is English; `zh` locale and model prompts stay Chinese. Lab default-deny `own.hint` is unchanged.
+- Bundled `paper-autopilot` skill + `npm run install:skill`.
+- Red-team evidence ledger: claimed→observed verification, ResidualUnknown, eight `redteam_evidence_*` / `redteam_unknown_*` tools.
+
 # 1.1.71
 
 ## 中文

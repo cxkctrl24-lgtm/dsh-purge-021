@@ -1,7 +1,7 @@
 {
   "name": "dsh-purge",
-  "version": "1.1.79-0.2.1.rc.2-fork1-b0-2",
-  "description": "dsh-purge fork（cxkctrl24-lgtm/dsh-purge-021）：DeepSeek Harness 破甲 + 网络安全红队评测插件。上游 YuJunZhiXue/dsh-purge 的维护分支，已并入上游 1.1.74–1.1.78 的修复，并追加宿主退出诊断、asar 重启兜底、注入正文覆盖修复、装配性能优化与可见性探针。默认提示词面向国模「小码酱」；换模型可换提示词。Jailbreak + red-team eval for DeepSeek Harness (community fork).",
+  "version": "1.1.83-0.2.1.rc.2-fork2",
+  "description": "dsh-purge fork（cxkctrl24-lgtm/dsh-purge-021）：DeepSeek Harness 破甲 + 网络安全红队评测插件。基座 = 上游 Apache-2.0 的 1.1.82，逐项并入 fork 增量（宿主退出诊断 F1、asar 改名失败兜底 F2、注入正文覆盖判定修复、装配性能四项、可见性探针）。默认提示词面向国模「小码酱」；换模型可换提示词。Jailbreak + red-team eval for DeepSeek Harness (community fork of YuJunZhiXue/dsh-purge).",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -24,22 +24,23 @@
     "bin",
     "docs",
     "presets",
-    "skills",
     "scripts",
     "client.js",
     "cordis.patch.yml",
     "screenshots.json",
     "README.md",
     "README.zh-CN.md",
-    "CHANGELOG-fork1.md",
-    "LICENSE"
+    "CHANGELOG-fork2.md",
+    "LICENSE",
+    "NOTICE"
   ],
   "scripts": {
     "embed-prompt": "node scripts/embed-default-prompt.mjs",
     "build:client": "node scripts/build-client.mjs",
-    "ensure-profile-bundle": "node scripts/ensure-profile-bundle.mjs"
+    "postinstall": "node scripts/ensure-profile-bundle.mjs",
+    "test": "node --test"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "keywords": [
     "dsh-purge-fork",
     "fork",
@@ -65,13 +66,6 @@
   "bugs": {
     "url": "https://github.com/cxkctrl24-lgtm/dsh-purge-021/issues"
   },
-  "dshPurgeFork": {
-    "batch": "b0-2 — 删掉 scripts.postinstall（`ensure-profile-bundle` 改名为普通脚本 `npm run ensure-profile-bundle`）：pnpm 11 默认拦截依赖的构建脚本，从插件市场装本包会卡在「构建脚本被 pnpm 默认拦截，点击放行构建脚本并重试」；而该脚本只在 `pnpm add` 场景补 `dsh.profile.bundles`，本 profile 的 bundles 是手工维护的，去掉即可消除安装摩擦。代码内容与 b0-1 完全一致，只有 package.json 的 scripts/version 两处不同。b0-1 — ①b0 的可见性探针（lib/probe.js：心跳 / apply·dispose·reload 生命周期 / purgeLog 调用计数 / 主日志落盘成败）②★修复：cordis.patch.yml 的主行从「id 覆盖」改回 insert —— fork1 照搬上游 1.1.75 `6980fe2` 的 already-queued 修法后，本 profile（dsh-purge 只在 dsh.profile.bundles 里）没有任何补丁再创建该行，组合器实测报 `patch: entry \"dsh-purge\" not found`，父插件因此永不装载（无 [boot]、无钩子、面板消失）。诊断全程见 dsh-purge-opt/26-*.md。",
-    "note": "fork 基线 1.1.73-0.2.1.rc.2；已并入上游 1.1.74-1.1.78 的修复。核心号取 1.1.79 是为确保 lib/update.js 的 versionIsNewer 不把上游 1.1.78 判为更新（否则手动检查更新会整批覆盖回上游代码）。",
-    "base": "1.1.73-0.2.1.rc.2",
-    "upstreamPorts": ["1.1.74", "1.1.75", "1.1.76", "1.1.78"],
-    "upstreamRepo": "https://github.com/YuJunZhiXue/dsh-purge"
-  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
@@ -80,8 +74,11 @@
       "platform": "web",
       "inject": [
         "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-runtime",
         "@deepseek-ai/dsh-client-locale",
-        "@deepseek-ai/dsh-client-ui-settings"
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-conversation"
       ]
     },
     "install": {
@@ -100,5 +97,21 @@
   "engines": {
     "node": ">=18"
   },
-  "dshTarget": "0.2.1-rc.2"
+  "dshTarget": "0.2.1-rc.2",
+  "dshPurgeFork": {
+    "base": "1.1.82",
+    "upstreamRepo": "https://github.com/YuJunZhiXue/dsh-purge",
+    "upstreamTagsPorted": "1.1.79, 1.1.80, 1.1.81, 1.1.82（整棵树直接作为新基座，不再点对点打补丁）",
+    "forkIncrements": [
+      "F1 宿主被信号杀时写 <userData>/logs/dsh-purge-host-exit.log",
+      "F2 asar 改名失败也拉起客户端",
+      "G10 覆盖判定：血统标记降级为兜底 + mtime 证据（手改 prompt-inject.md 不再被覆盖）",
+      "P1-3/P1-7 hung 缓存 30s + (mtime:size) 戳 + 条件 sync",
+      "P1-4 injectMatchers 模块级缓存",
+      "P1-6 日志批量写（250ms / 8KB）",
+      "b0 可见性探针 lib/probe.js（心跳 / 生命周期 / 落盘成败）"
+    ],
+    "licenseNote": "上游自 1.1.7x 起改为 Apache-2.0，本 fork 随之改用 Apache-2.0 并保留 NOTICE；LICENSE / NOTICE 不得删改。",
+    "note": "核心号取 1.1.83 是为了让 versionIsNewer() 把上游 1.1.82 判为更旧（splitVersion 只比 core 三位），否则点「检查更新」会整批覆盖回上游代码，丢掉全部 fork 增量。"
+  }
 }
